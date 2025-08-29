@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-@Disabled
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 class SpringBootDockerApplicationTests {
@@ -210,9 +210,9 @@ class SpringBootDockerApplicationTests {
         userRepository.deleteAll();
 
         // Create some test users with MariaDB specific data
-        userRepository.save(new User("MariaDB User 1", "maria1@example.com"));
-        userRepository.save(new User("MariaDB User 2", "maria2@example.com"));
-        userRepository.save(new User("MariaDB User 3", "maria3@example.com"));
+        userRepository.save(new User("MariaDB User one", "maria1@example.com"));
+        userRepository.save(new User("MariaDB User two", "maria2@example.com"));
+        userRepository.save(new User("MariaDB User three", "maria3@example.com"));
 
         // Get all users via REST API
         String url = "http://localhost:" + port + "/api/users";
@@ -232,8 +232,8 @@ class SpringBootDockerApplicationTests {
     @Test
     void testMariaDBSpecificFeatures() {
         // Test MariaDB specific functionality
-        User user1 = new User("Test User 1", "test1@mariadb.com");
-        User user2 = new User("Test User 2", "test2@mariadb.com");
+        User user1 = new User("Test User one", "test1@mariadb.com");
+        User user2 = new User("Test User two", "test2@mariadb.com");
 
         userRepository.save(user1);
         userRepository.save(user2);

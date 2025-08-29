@@ -15,7 +15,7 @@ public class User {
     private Long id;
 
     @Column(nullable = false)
-    @Pattern(regexp = "^[A-Za-z]+$", message = "Username must contain only letters")
+    @Pattern(regexp = "^[A-Za-z ]+$", message = "Username must contain only letters and spaces")
     @NotBlank
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     private String name;
