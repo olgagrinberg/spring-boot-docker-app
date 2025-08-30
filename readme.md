@@ -116,11 +116,17 @@ The application provides the following REST endpoints:
 curl -X POST http://localhost:8080/api/users \
   -H "Content-Type: application/json" \
   -d '{"name": "John Doe", "email": "john@example.com"}'
+  
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbG................." \
+  -d '{"name": "John Doe", "email": "john@example.com"}'
 ```
 
 **Get all users:**
 ```bash
 curl http://localhost:8080/api/users
+curl -H "Authorization: Bearer eyJhbG............" http://localhost:8080/api/users
 ```
 
 **Get user by ID:**
