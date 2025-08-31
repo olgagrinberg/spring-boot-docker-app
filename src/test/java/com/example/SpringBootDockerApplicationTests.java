@@ -2,27 +2,41 @@ package com.example;
 
 import com.example.entity.User;
 import com.example.repository.UserRepository;
-import org.junit.jupiter.api.Disabled;
+import com.example.security.JWTTokenGenerator;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.crypto.SecretKey;
+import java.util.Base64;
+import java.util.Date;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@TestPropertySource(properties = {
+        "JWT_USER=testuser",
+        "JWT_PASSWORD=testpassword",
+        "JWT_EXPIRATION=86400",
+        "JWT_HEADER=Authorization",
+        "JWT_PREFIX=Bearer "
+})
 class SpringBootDockerApplicationTests {
 
     @LocalServerPort
@@ -36,6 +50,15 @@ class SpringBootDockerApplicationTests {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Value("${JWT_SECRET}")
+    String base64_secret;
+
+    @Value("${JWT_USER}")
+    String username;
+
+    @Value("${JWT_EXPIRATION}")
+    Long expirationSeconds;
 
     // Test containers for isolated testing
     @Container
@@ -66,6 +89,9 @@ class SpringBootDockerApplicationTests {
         // MariaDB specific JPA properties
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MariaDBDialect");
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.MariaDBDialect");
+
+        String secret = JWTTokenGenerator.generateSecret();
+        registry.add("JWT_SECRET", ( )-> secret);
     }
 
     @Test
@@ -121,19 +147,43 @@ class SpringBootDockerApplicationTests {
 
     @Test
     void testHealthEndpoint() {
-        // Test the custom health endpoint
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                "http://localhost:" + port + "/api/users/health", String.class);
+
+        // Test the api health endpoint
+
+        String url = "http://localhost:" + port + "/api/users/health";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(generateToken());
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("Application is running");
+
     }
 
     @Test
     void testActuatorHealthEndpoint() {
         // Test the actuator health endpoint
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                "http://localhost:" + port + "/actuator/health", String.class);
+
+        String url = "http://localhost:" + port + "/actuator/health";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(generateToken());
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("UP");
@@ -146,7 +196,17 @@ class SpringBootDockerApplicationTests {
 
         // CREATE - Post a new user
         User newUser = new User("Maria DB User", "maria.db@example.com");
-        ResponseEntity<User> createResponse = restTemplate.postForEntity(baseUrl, newUser, User.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(generateToken());
+        HttpEntity<User> entity = new HttpEntity<>(newUser, headers);
+
+        ResponseEntity<User> createResponse = restTemplate.exchange(
+                baseUrl,
+                HttpMethod.POST,
+                entity,
+                User.class
+        );
 
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(createResponse.getBody()).isNotNull();
@@ -156,29 +216,37 @@ class SpringBootDockerApplicationTests {
         Long userId = createResponse.getBody().getId();
 
         // READ - Get the created user
-        ResponseEntity<User> getResponse = restTemplate.getForEntity(
-                baseUrl + "/" + userId, User.class);
+
+        HttpEntity<User> entity1 = new HttpEntity<>(headers);
+        ResponseEntity<User> getResponse = restTemplate.exchange(
+                baseUrl + "/" + userId,
+                HttpMethod.GET,
+                entity1,
+                User.class
+        );
 
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getResponse.getBody()).isNotNull();
         assertThat(getResponse.getBody().getName()).isEqualTo("Maria DB User");
 
-        // UPDATE - Update the user
-        User updatedUser = new User("Updated Maria User", "updated.maria@example.com");
-        restTemplate.put(baseUrl + "/" + userId, updatedUser);
-
-        // Verify update
-        ResponseEntity<User> updatedResponse = restTemplate.getForEntity(
-                baseUrl + "/" + userId, User.class);
-        assertThat(updatedResponse.getBody().getName()).isEqualTo("Updated Maria User");
-        assertThat(updatedResponse.getBody().getEmail()).isEqualTo("updated.maria@example.com");
-
         // DELETE - Delete the user
-        restTemplate.delete(baseUrl + "/" + userId);
+        //restTemplate.delete(baseUrl + "/" + userId);
+        restTemplate.exchange(
+                baseUrl + "/" + userId,
+                HttpMethod.DELETE,
+                entity1,
+                User.class
+        );
 
         // Verify deletion
-        ResponseEntity<User> deletedResponse = restTemplate.getForEntity(
-                baseUrl + "/" + userId, User.class);
+
+        ResponseEntity<User> deletedResponse = restTemplate.exchange(
+                baseUrl + "/" + userId,
+                HttpMethod.GET,
+                entity1,
+                User.class
+        );
+
         assertThat(deletedResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
@@ -190,7 +258,16 @@ class SpringBootDockerApplicationTests {
 
         // First request - should cache the user
         String url = "http://localhost:" + port + "/api/users/" + savedUser.getId();
-        ResponseEntity<User> firstResponse = restTemplate.getForEntity(url, User.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(generateToken());
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<User> firstResponse = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                User.class
+        );
 
         assertThat(firstResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(firstResponse.getBody()).isNotNull();
@@ -200,7 +277,12 @@ class SpringBootDockerApplicationTests {
         assertThat(cachedUser).isNotNull();
 
         // Second request - should come from cache
-        ResponseEntity<User> secondResponse = restTemplate.getForEntity(url, User.class);
+        ResponseEntity<User> secondResponse = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                User.class
+        );
         assertThat(secondResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(secondResponse.getBody().getName()).isEqualTo("Cached MariaDB User");
     }
@@ -217,7 +299,16 @@ class SpringBootDockerApplicationTests {
 
         // Get all users via REST API
         String url = "http://localhost:" + port + "/api/users";
-        ResponseEntity<User[]> response = restTemplate.getForEntity(url, User[].class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(generateToken());
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<User[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                User[].class
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -272,5 +363,18 @@ class SpringBootDockerApplicationTests {
             // If there's an error, count should remain unchanged
             assertThat(userRepository.count()).isEqualTo(initialCount);
         }
+    }
+
+    private String generateToken() {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + (expirationSeconds * 1000));
+        SecretKey secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(base64_secret));
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
     }
 }

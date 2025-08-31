@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,7 +18,6 @@ import java.util.Scanner;
 public class JWTTokenGenerator {
 
     // Your exact Base64 secret key
-    //private static final String BASE64_SECRET = "aGVsbG93b3JsZGhlbGxvd29ybGRoZWxsb3dvcmxkaGVsbG93b3JsZA==";
 
     // Default expiration: 24 hours in seconds
     private static final long DEFAULT_EXPIRATION_SECONDS = 86400;
@@ -209,6 +209,13 @@ public class JWTTokenGenerator {
                 System.out.println("❌ Please enter a valid number.");
             }
         }
+    }
+
+    public static String generateSecret() {
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     private void generateSimpleToken(Scanner scanner) {
