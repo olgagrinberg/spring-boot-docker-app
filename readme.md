@@ -109,6 +109,9 @@ The application provides the following REST endpoints:
 - `GET /api/users/health` - Application health status
 - `GET /actuator/health` - Detailed health information
 
+### Access Swagger UI
+http://localhost:8080/swagger-ui.html
+
 ### Example API Usage
 
 **Create a user:**

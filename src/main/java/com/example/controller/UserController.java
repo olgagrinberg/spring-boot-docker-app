@@ -23,6 +23,8 @@ import com.example.entity.User;
 import com.example.repository.UserRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "User API", description = "Operations related to user management with resilience patterns")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -48,6 +51,7 @@ public class UserController {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Operation(summary = "Get all users", description = "Fetches all users from the database")
     @GetMapping
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackGetAllUsers")
     @Retry(name = USER_SERVICE)
@@ -62,6 +66,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Get user by ID", description = "Fetches a user by ID, with Redis caching")
     @GetMapping("/{id}")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackGetUserById")
     @Retry(name = USER_SERVICE)
@@ -90,6 +95,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Create a new user", description = "Creates a user and caches it in Redis")
     @PostMapping
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackCreateUser")
     @Retry(name = USER_SERVICE)
@@ -108,6 +114,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Update user", description = "Updates an existing user and refreshes cache")
     @PutMapping("/{id}")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackUpdateUser")
     @Retry(name = USER_SERVICE)
@@ -133,6 +140,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Delete user", description = "Deletes a user and removes it from cache")
     @DeleteMapping("/{id}")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackDeleteUser")
     @Retry(name = USER_SERVICE)
@@ -153,6 +161,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Health check", description = "Returns application health status")
     @GetMapping("/health")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackHealth")
     public ResponseEntity<String> health() {
