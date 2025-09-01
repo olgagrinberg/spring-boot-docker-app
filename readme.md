@@ -201,3 +201,8 @@ For production deployment:
 ## License
 
 This project is licensed under the MIT License.
+
+## Kubernetes local commands
+
+kompose-windows-amd64.exe  --file compose.yaml convert -o manifest.yaml
+kubectl apply -f manifest.yaml

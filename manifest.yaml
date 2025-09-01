@@ -1,0 +1,216 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: mariadb
+  name: mariadb
+spec:
+  ports:
+    - name: "3306"
+      port: 3306
+      targetPort: 3306
+  selector:
+    io.kompose.service: mariadb
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: redis
+  name: redis
+spec:
+  ports:
+    - name: "6379"
+      port: 6379
+      targetPort: 6379
+  selector:
+    io.kompose.service: redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: springboot-app
+  name: springboot-app
+spec:
+  ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
+  selector:
+    io.kompose.service: springboot-app
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: mariadb
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: mariadb
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: mydb
+            - name: MYSQL_ROOT_PASSWORD
+              value: secret
+          image: mariadb:latest
+          name: mariadb
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mariadb-data
+      restartPolicy: Always
+      volumes:
+        - name: mariadb-data
+          persistentVolumeClaim:
+            claimName: mariadb-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: mariadb-data
+  name: mariadb-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: redis
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: redis
+    spec:
+      containers:
+        - args:
+            - redis-server
+            - --appendonly
+            - "yes"
+          image: redis:7-alpine
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          name: redis
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data
+              name: redis-data
+      restartPolicy: Always
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: redis-data
+  name: redis-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: springboot-app
+  name: springboot-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: springboot-app
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\Users\ogrin\Downloads\kompose-windows-amd64.exe --file C:\Users\ogrin\IdeaProjects\spring-boot-docker-app\compose.yaml convert -o manifest.yaml
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: springboot-app
+    spec:
+      containers:
+        - env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: secret
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mariadb://mariadb:3306/mydb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+          image: springboot-app
+          name: springboot-app
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      restartPolicy: Always
