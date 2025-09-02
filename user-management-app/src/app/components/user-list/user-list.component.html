@@ -86,7 +86,7 @@
               required
               #userName="ngModel"
               [class.is-invalid]="userName.invalid && userName.touched"
-            >
+              trim >
             <div class="invalid-feedback">
               Name is required
             </div>
@@ -104,7 +104,7 @@
               email
               #userEmail="ngModel"
               [class.is-invalid]="userEmail.invalid && userEmail.touched"
-            >
+              trim >
             <div class="invalid-feedback">
               <span *ngIf="userEmail.errors?.['required']">Email is required</span>
               <span *ngIf="userEmail.errors?.['email']">Please enter a valid email</span>

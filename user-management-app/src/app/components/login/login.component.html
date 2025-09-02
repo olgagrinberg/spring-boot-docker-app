@@ -17,7 +17,7 @@
                 required
                 #username="ngModel"
                 [class.is-invalid]="username.invalid && username.touched"
-              >
+                trim >
               <div class="invalid-feedback">
                 Username is required
               </div>
@@ -34,7 +34,7 @@
                 required
                 #password="ngModel"
                 [class.is-invalid]="password.invalid && password.touched"
-              >
+                trim >
               <div class="invalid-feedback">
                 Password is required
               </div>
