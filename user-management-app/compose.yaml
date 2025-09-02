@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # Angular Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: user-management-frontend
+    ports:
+      - "4200:8080"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - user-management-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=frontend"
+      - "com.docker.compose.project=user-management"
+
+  # Backend API (placeholder - replace with your actual backend)
+  backend:
+    image: openjdk:17-jdk-slim
+    container_name: user-management-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DATABASE_URL=jdbc:postgresql://database:5432/userdb
+      - DATABASE_USERNAME=userapp
+      - DATABASE_PASSWORD=userpass123
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      # Mount your backend JAR file here
+      - ./backend/target/user-management-backend.jar:/app/app.jar
+    command: ["java", "-jar", "/app/app.jar"]
+    depends_on:
+      - database
+      - redis
+    networks:
+      - user-management-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.docker.compose.service=backend"
+      - "com.docker.compose.project=user-management"
+
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: user-management-database
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: userapp
+      POSTGRES_PASSWORD: userpass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - user-management-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U userapp -d userdb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.docker.compose.service=database"
+      - "com.docker.compose.project=user-management"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: user-management-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redispass123
+    volumes:
+      - redis_data:/data
+    networks:
+      - user-management-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.docker.compose.service=redis"
+      - "com.docker.compose.project=user-management"
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: user-management-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - user-management-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.docker.compose.service=nginx"
+      - "com.docker.compose.project=user-management"
+
+volumes:
+  postgres_data:
+    driver: local
+    labels:
+      - "com.docker.compose.project=user-management"
+  redis_data:
+    driver: local
+    labels:
+      - "com.docker.compose.project=user-management"
+
+networks:
+  user-management-network:
+    driver: bridge
+    labels:
+      - "com.docker.compose.project=user-management"

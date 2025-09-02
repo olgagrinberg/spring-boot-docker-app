@@ -1,0 +1,86 @@
+version: '3.8'
+
+# Development environment with hot reload
+services:
+  # Angular Frontend (Development with hot reload)
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: user-management-frontend-dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - user-management-dev-network
+    restart: unless-stopped
+    command: npm start
+
+  # Backend API (Development)
+  backend-dev:
+    image: openjdk:17-jdk-slim
+    container_name: user-management-backend-dev
+    ports:
+      - "8080:8080"
+      - "5005:5005" # Debug port
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - DATABASE_URL=jdbc:postgresql://database-dev:5432/userdb
+      - DATABASE_USERNAME=userapp
+      - DATABASE_PASSWORD=userpass123
+      - REDIS_URL=redis://redis-dev:6379
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    command: ["./mvnw", "spring-boot:run"]
+    depends_on:
+      - database-dev
+      - redis-dev
+    networks:
+      - user-management-dev-network
+    restart: unless-stopped
+
+  # PostgreSQL Database (Development)
+  database-dev:
+    image: postgres:15-alpine
+    container_name: user-management-database-dev
+    ports:
+      - "5433:5432" # Different port to avoid conflicts
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: userapp
+      POSTGRES_PASSWORD: userpass123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - user-management-dev-network
+    restart: unless-stopped
+
+  # Redis Cache (Development)
+  redis-dev:
+    image: redis:7-alpine
+    container_name: user-management-redis-dev
+    ports:
+      - "6380:6379" # Different port to avoid conflicts
+    command: redis-server --requirepass redispass123
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - user-management-dev-network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  user-management-dev-network:
+    driver: bridge
