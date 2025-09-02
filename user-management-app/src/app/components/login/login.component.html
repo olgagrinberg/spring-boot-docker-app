@@ -1,0 +1,68 @@
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+  <div class="row w-100">
+    <div class="col-md-4 offset-md-4">
+      <div class="card shadow">
+        <div class="card-body">
+          <h3 class="card-title text-center mb-4">Login</h3>
+
+          <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                name="username"
+                [(ngModel)]="credentials.username"
+                required
+                #username="ngModel"
+                [class.is-invalid]="username.invalid && username.touched"
+              >
+              <div class="invalid-feedback">
+                Username is required
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                [(ngModel)]="credentials.password"
+                required
+                #password="ngModel"
+                [class.is-invalid]="password.invalid && password.touched"
+              >
+              <div class="invalid-feedback">
+                Password is required
+              </div>
+            </div>
+
+            <div class="alert alert-danger" *ngIf="errorMessage">
+              {{ errorMessage }}
+            </div>
+
+            <div class="d-grid">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="loginForm.invalid || isLoading"
+              >
+                <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
+                {{ isLoading ? 'Signing In...' : 'Sign In' }}
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              Default credentials: admin / admin
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
