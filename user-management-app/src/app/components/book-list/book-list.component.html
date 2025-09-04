@@ -1,0 +1,254 @@
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <h2>Book Management</h2>
+    </div>
+    <div class="col-md-6 text-end">
+      <button class="btn btn-outline-secondary me-2" (click)="navigateToUsers()">
+        <i class="bi bi-people"></i> Manage Users
+      </button>
+      <button class="btn btn-outline-danger me-2" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="bi bi-plus-circle"></i> Add Book
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search books by title, author, or ISBN..."
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchBooks()"
+        >
+        <button class="btn btn-outline-secondary" type="button" (click)="searchBooks()">
+          <i class="bi bi-search"></i>
+        </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()" *ngIf="searchQuery">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-danger alert-dismissible fade show" *ngIf="errorMessage">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="text-center py-5" *ngIf="isLoading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Books Table -->
+  <div class="card shadow-sm" *ngIf="!isLoading">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Genre</th>
+            <th>Published Year</th>
+            <th>ISBN</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let book of books">
+            <td>{{ book.id }}</td>
+            <td>
+              <strong>{{ book.title }}</strong>
+              <small class="d-block text-muted" *ngIf="book.description">
+                {{ book.description | slice:0:50 }}{{ book.description && book.description.length > 50 ? '...' : '' }}
+              </small>
+            </td>
+            <td>{{ book.author }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ book.genre }}</span>
+            </td>
+            <td>{{ book.publishedYear }}</td>
+            <td>
+              <code>{{ book.isbn }}</code>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="openEditModal(book)">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteBook(book)">
+                <i class="bi bi-trash"></i> Delete
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <div class="text-center py-4" *ngIf="books.length === 0 && !isLoading">
+          <i class="bi bi-book display-1 text-muted"></i>
+          <p class="text-muted mt-3">
+            {{ searchQuery ? 'No books found matching your search.' : 'No books found.' }}
+          </p>
+          <button class="btn btn-primary" (click)="openCreateModal()" *ngIf="!searchQuery">
+            <i class="bi bi-plus-circle"></i> Add Your First Book
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Add/Edit Book -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ isEditing ? 'Edit Book' : 'Add New Book' }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <form (ngSubmit)="saveBook()" #bookForm="ngForm">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="bookTitle" class="form-label">Title *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="bookTitle"
+                  name="bookTitle"
+                  [(ngModel)]="newBook.title"
+                  required
+                  #bookTitle="ngModel"
+                  [class.is-invalid]="bookTitle.invalid && bookTitle.touched"
+                >
+                <div class="invalid-feedback">
+                  Title is required
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="publishedYear" class="form-label">Published Year *</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="publishedYear"
+                  name="publishedYear"
+                  [(ngModel)]="newBook.publishedYear"
+                  required
+                  min="1000"
+                  max="2030"
+                  #publishedYear="ngModel"
+                  [class.is-invalid]="publishedYear.invalid && publishedYear.touched"
+                >
+                <div class="invalid-feedback">
+                  Valid year is required
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="bookAuthor" class="form-label">Author *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="bookAuthor"
+                  name="bookAuthor"
+                  [(ngModel)]="newBook.author"
+                  required
+                  #bookAuthor="ngModel"
+                  [class.is-invalid]="bookAuthor.invalid && bookAuthor.touched"
+                >
+                <div class="invalid-feedback">
+                  Author is required
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="bookGenre" class="form-label">Genre *</label>
+                <select
+                  class="form-control"
+                  id="bookGenre"
+                  name="bookGenre"
+                  [(ngModel)]="newBook.genre"
+                  required
+                  #bookGenre="ngModel"
+                  [class.is-invalid]="bookGenre.invalid && bookGenre.touched"
+                >
+                  <option value="">Select a genre</option>
+                  <option *ngFor="let genre of genres" [value]="genre">{{ genre }}</option>
+                </select>
+                <div class="invalid-feedback">
+                  Genre is required
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="bookIsbn" class="form-label">ISBN *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="bookIsbn"
+              name="bookIsbn"
+              [(ngModel)]="newBook.isbn"
+              required
+              pattern="[0-9\-X]{10,17}"
+              #bookIsbn="ngModel"
+              [class.is-invalid]="bookIsbn.invalid && bookIsbn.touched"
+              placeholder="e.g., 978-0-123456-47-2"
+            >
+            <div class="invalid-feedback">
+              <span *ngIf="bookIsbn.errors?.['required']">ISBN is required</span>
+              <span *ngIf="bookIsbn.errors?.['pattern']">Please enter a valid ISBN</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="bookDescription" class="form-label">Description</label>
+            <textarea
+              class="form-control"
+              id="bookDescription"
+              name="bookDescription"
+              [(ngModel)]="newBook.description"
+              rows="3"
+              placeholder="Brief description of the book..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="bookForm.invalid"
+          >
+            <i class="bi bi-check-circle"></i>
+            {{ isEditing ? 'Update Book' : 'Add Book' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>

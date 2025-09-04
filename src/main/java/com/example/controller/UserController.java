@@ -58,8 +58,7 @@ public class UserController {
     public ResponseEntity<List<User>> getAllUsers() {
         try {
             logger.info("Fetching all users from database");
-            List<User> users = userRepository.findAll();
-            return ResponseEntity.ok(users);
+            return ResponseEntity.ok(userRepository.findAll());
         } catch (Exception e) {
             logger.error("Error fetching all users", e);
             throw e;
@@ -73,22 +72,18 @@ public class UserController {
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         try {
             logger.info("Fetching user with id: {}", id);
-
             // Try to get from Redis cache first
-            User cachedUser = (User) redisTemplate.opsForValue().get("user:" + id);
-            if (cachedUser != null) {
-                logger.info("User found in cache: {}", id);
-                return ResponseEntity.ok(cachedUser);
-            }
-
-            Optional<User> user = userRepository.findById(id);
-            if (user.isPresent()) {
-                // Cache the user in Redis
-                redisTemplate.opsForValue().set("user:" + id, user.get());
-                logger.info("User cached successfully: {}", id);
-                return ResponseEntity.ok(user.get());
-            }
-            return ResponseEntity.notFound().build();
+            return Optional.ofNullable((User) redisTemplate.opsForValue().get("user:" + id))
+                    .map(cachedUser -> {
+                        logger.info("User found in cache: {}", id);
+                        return ResponseEntity.ok(cachedUser);
+                    })
+                    .or(() -> userRepository.findById(id).map(user -> {
+                        redisTemplate.opsForValue().set("user:" + id, user);
+                        logger.info("User cached successfully: {}", id);
+                        return ResponseEntity.ok(user);
+                    }))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
             logger.error("Error fetching user with id: {}", id, e);
             throw e;
@@ -121,19 +116,22 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
         try {
             logger.info("Updating user with id: {}", id);
-            Optional<User> optionalUser = userRepository.findById(id);
-            if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
-                user.setName(userDetails.getName());
-                user.setEmail(userDetails.getEmail());
-                User updatedUser = userRepository.save(user);
 
-                // Update cache
-                redisTemplate.opsForValue().set("user:" + id, updatedUser);
-                logger.info("User updated and cache refreshed: {}", id);
-                return ResponseEntity.ok(updatedUser);
-            }
-            return ResponseEntity.notFound().build();
+            return userRepository.findById(id)
+                    .map(user -> {
+                        user.setName(userDetails.getName());
+                        user.setEmail(userDetails.getEmail());
+                        User updatedUser = userRepository.save(user);
+
+                        redisTemplate.opsForValue().set("user:" + id, updatedUser);
+                        logger.info("User updated and cache refreshed: {}", id);
+
+                        return ResponseEntity.ok(updatedUser);
+                    })
+                    .orElseGet(() -> {
+                        logger.warn("User not found with id: {}", id);
+                        return ResponseEntity.notFound().build();
+                    });
         } catch (Exception e) {
             logger.error("Error updating user with id: {}", id, e);
             throw e;
@@ -144,17 +142,22 @@ public class UserController {
     @DeleteMapping("/{id}")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackDeleteUser")
     @Retry(name = USER_SERVICE)
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        logger.info("Deleting user with id: {}", id);
+
         try {
-            logger.info("Deleting user with id: {}", id);
-            if (userRepository.existsById(id)) {
-                userRepository.deleteById(id);
-                // Remove from cache
-                redisTemplate.delete("user:" + id);
-                logger.info("User deleted and removed from cache: {}", id);
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.notFound().build();
+            return Optional.of(id)
+                    .filter(userRepository::existsById)
+                    .map(existingId -> {
+                        userRepository.deleteById(existingId);
+                        redisTemplate.delete("user:" + existingId);
+                        logger.info("User deleted and removed from cache: {}", existingId);
+                        return ResponseEntity.ok().build();
+                    })
+                    .orElseGet(() -> {
+                        logger.warn("User not found with id: {}", id);
+                        return ResponseEntity.notFound().build();
+                    });
         } catch (Exception e) {
             logger.error("Error deleting user with id: {}", id, e);
             throw e;

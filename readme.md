@@ -124,6 +124,10 @@ curl -X POST http://localhost:8080/api/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbG................." \
   -d '{"name": "John Doe", "email": "john@example.com"}'
+  
+curl -X POST http://localhost:8080/api/books \
+  -H "Content-Type: application/json" \
+  -d '{"title": "John Doe book", "author": "John Doe", "isbn": "12345"}'  
 ```
 
 **Get all users:**

@@ -1,0 +1,122 @@
+.card {
+  border-radius: 10px;
+  border: none;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: white;
+  background-color: #212529;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.btn {
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modal.show {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  border-radius: 10px;
+  border: none;
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.alert {
+  border-radius: 5px;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.input-group .btn {
+  border-color: #ced4da;
+}
+
+.input-group .btn:hover {
+  background-color: #e9ecef;
+}
+
+code {
+  font-size: 0.875rem;
+  color: #d63384;
+  background-color: #f8f9fa;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.text-muted small {
+  font-size: 0.8rem;
+}
+
+.display-1 {
+  font-size: 4rem;
+  opacity: 0.3;
+}
+
+/* Custom styling for the search bar */
+.input-group .form-control:focus {
+  z-index: 3;
+}
+
+/* Book description truncation */
+.book-description {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
