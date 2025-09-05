@@ -1,7 +1,6 @@
 package com.example.controller;
 
 import com.example.entity.Book;
-import com.example.entity.User;
 import com.example.repository.BookRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -36,7 +35,7 @@ public class BookController {
     @GetMapping
     @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackGetAllBooks")
     @Retry(name = BOOK_SERVICE)
-    public ResponseEntity<List<Book>> getAllBooks(@RequestParam(required = false) String search) {
+    public ResponseEntity<List<Book>> getAllBooks() {
         try {
             logger.info("Fetching all books from database");
             return ResponseEntity.ok(bookRepository.findAll());
@@ -128,17 +127,6 @@ public class BookController {
     @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackDeleteBook")
     @Retry(name = BOOK_SERVICE)
     public ResponseEntity<?> deleteBook(@PathVariable Long id) {
-        /*
-        Optional<Book> book = bookRepository.findById(id);
-        
-        if (book.isPresent()) {
-            bookRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-        }
-        
-        return ResponseEntity.notFound().build();
-
-         */
         logger.info("Deleting book with id: {}", id);
 
         try {
@@ -156,6 +144,20 @@ public class BookController {
                     });
         } catch (Exception e) {
             logger.error("Error deleting book with id: {}", id, e);
+            throw e;
+        }
+    }
+
+    @Operation(summary = "Search books", description = "Searches books from the database")
+    @GetMapping("/search")
+    @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackSearchBooks")
+    @Retry(name = BOOK_SERVICE)
+    public ResponseEntity<List<Book>> searchBooks(@RequestParam("q") String query) {
+        try {
+            logger.info("Searching books from database");
+            return ResponseEntity.ok(bookRepository.findBySearchTerm(query));
+        } catch (Exception e) {
+            logger.error("Error searching books", e);
             throw e;
         }
     }
@@ -209,6 +211,12 @@ public class BookController {
         logger.warn("Circuit breaker activated for deleteBook: {}. Error: {}", id, ex.getMessage());
         return ResponseEntity.status(503).build();
     }
+
+
+    public ResponseEntity<List<Book>> fallbackSearchBooks(String search, Exception ex) {
+        logger.warn("Circuit breaker activated for searchBooks: {}. Error: {}", search, ex.getMessage());
+        return ResponseEntity.status(503).build();
+    };
 
     public ResponseEntity<String> fallbackHealth(Exception ex) {
         logger.warn("Circuit breaker activated for health check. Error: {}", ex.getMessage());
