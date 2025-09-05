@@ -155,7 +155,12 @@ public class BookController {
     public ResponseEntity<List<Book>> searchBooks(@RequestParam("q") String query) {
         try {
             logger.info("Searching books from database");
-            return ResponseEntity.ok(bookRepository.findBySearchTerm(query));
+            return bookRepository.findBySearchTerm(query)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> {
+                        logger.warn("Books not found with query: {}", query);
+                        return ResponseEntity.notFound().build();
+                    });
         } catch (Exception e) {
             logger.error("Error searching books", e);
             throw e;

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from '../models/user.model';
 import { AuthService } from './auth.service';
+import {Book} from '../models/book.model';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +50,12 @@ export class UserService {
 
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  searchUsers(query: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.baseUrl}/search?q=${query}`, {
       headers: this.getAuthHeaders()
     });
   }

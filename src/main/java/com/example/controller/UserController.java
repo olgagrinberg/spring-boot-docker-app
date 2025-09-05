@@ -164,6 +164,25 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Search users", description = "Searches users from the database")
+    @GetMapping("/search")
+    @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackSearchUsers")
+    @Retry(name = USER_SERVICE)
+    public ResponseEntity<List<User>> searchUsers(@RequestParam("q") String query) {
+        try {
+            logger.info("Searching users from database");
+            return userRepository.findByName(query)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> {
+                        logger.warn("Users not found with query: {}", query);
+                        return ResponseEntity.notFound().build();
+                    });
+        } catch (Exception e) {
+            logger.error("Error searching users", e);
+            throw e;
+        }
+    }
+
     @Operation(summary = "Health check", description = "Returns application health status")
     @GetMapping("/health")
     @CircuitBreaker(name = USER_SERVICE, fallbackMethod = "fallbackHealth")
@@ -214,6 +233,11 @@ public class UserController {
         logger.warn("Circuit breaker activated for deleteUser: {}. Error: {}", id, ex.getMessage());
         return ResponseEntity.status(503).build();
     }
+
+    public ResponseEntity<List<User>> fallbackSearchUsers(String search, Exception ex) {
+        logger.warn("Circuit breaker activated for searchUsers: {}. Error: {}", search, ex.getMessage());
+        return ResponseEntity.status(503).build();
+    };
 
     public ResponseEntity<String> fallbackHealth(Exception ex) {
         logger.warn("Circuit breaker activated for health check. Error: {}", ex.getMessage());

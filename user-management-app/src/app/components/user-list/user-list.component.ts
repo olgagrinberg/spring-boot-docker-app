@@ -20,6 +20,7 @@ export class UserListComponent implements OnInit {
   selectedUser: User | null = null;
   showModal: boolean = false;
   isEditing: boolean = false;
+  searchQuery: string = '';
 
   newUser: User = {
     name: '',
@@ -51,6 +52,30 @@ export class UserListComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  searchUsers(): void {
+    if (this.searchQuery.trim()) {
+      this.isLoading = true;
+      this.userService.searchUsers(this.searchQuery).subscribe({
+        next: (users) => {
+          this.users = users;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error searching books:', error);
+          this.errorMessage = 'Failed to search books. Please try again.';
+          this.isLoading = false;
+        }
+      });
+    } else {
+      this.loadUsers();
+    }
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.loadUsers();
   }
 
   openCreateModal(): void {

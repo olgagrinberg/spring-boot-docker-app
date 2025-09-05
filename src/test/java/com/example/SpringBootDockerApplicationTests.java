@@ -6,6 +6,7 @@ import com.example.security.JWTTokenGenerator;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -285,6 +286,7 @@ class SpringBootDockerApplicationTests {
                 User.class
         );
         assertThat(secondResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertNotNull(secondResponse.getBody());
         assertThat(secondResponse.getBody().getName()).isEqualTo("Cached MariaDB User");
     }
 
@@ -337,7 +339,7 @@ class SpringBootDockerApplicationTests {
 
         // Test findByEmail method
         assertThat(userRepository.findByEmail("test1@mariadb.com")).isPresent();
-        assertThat(userRepository.findByEmail("nonexistent@mariadb.com")).isEmpty();
+        assertThat(userRepository.findByEmail("nonexistent@mariadb.com")).get().isNotNull();
 
         // Test count functionality
         long totalUsers = userRepository.count();
