@@ -59,6 +59,12 @@ export class BookService {
     });
   }
 
+  searchDetails(query: string): Observable<string> {
+    return this.http.get<string>(`${this.baseUrl}/searchDetails?q=${query}`, {
+    headers: this.getAuthHeaders()
+    });
+  }
+
   getBooksByGenre(genre: string): Observable<Book[]> {
     return this.http.get<Book[]>(`${this.baseUrl}/genre/${genre}`, {
       headers: this.getAuthHeaders()

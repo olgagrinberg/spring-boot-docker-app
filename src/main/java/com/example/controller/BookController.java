@@ -167,6 +167,28 @@ public class BookController {
         }
     }
 
+    @Operation(summary = "Search details", description = "Searches details from ai")
+    @GetMapping("/search")
+    @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackSearchDetails")
+    @Retry(name = BOOK_SERVICE)
+    public ResponseEntity<String> searchDetails(@RequestParam("q") String query) {
+        try {
+            logger.info("Searching details from ai");
+
+            return query.startsWith("isbn") ? ResponseEntity.ok("ISBN") : ResponseEntity.ok("Description");
+                    /*bookRepository.findBySearchTerm(query)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> {
+                        logger.warn("Details not found with query: {}", query);
+                        return ResponseEntity.notFound().build();
+                    });
+                     */
+        } catch (Exception e) {
+            logger.error("Error searching details", e);
+            throw e;
+        }
+    }
+
     @Operation(summary = "Health check", description = "Returns application health status")
     @GetMapping("/health")
     @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackHealth")
@@ -217,9 +239,13 @@ public class BookController {
         return ResponseEntity.status(503).build();
     }
 
-
     public ResponseEntity<List<Book>> fallbackSearchBooks(String search, Exception ex) {
         logger.warn("Circuit breaker activated for searchBooks: {}. Error: {}", search, ex.getMessage());
+        return ResponseEntity.status(503).build();
+    };
+
+    public ResponseEntity<String> fallbackSearchDetails(String search, Exception ex) {
+        logger.warn("Circuit breaker activated for searchDetails: {}. Error: {}", search, ex.getMessage());
         return ResponseEntity.status(503).build();
     };
 
