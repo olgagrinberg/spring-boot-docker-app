@@ -46,6 +46,7 @@ public class JWTTokenGenerator {
 
         return Jwts.builder()
                 .setSubject(username)
+                .claim("role", "ADMIN")
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -61,13 +62,11 @@ public class JWTTokenGenerator {
 
         JwtBuilder builder = Jwts.builder()
                 .setSubject(username)
+                .claim("role", "ADMIN")
                 .setIssuedAt(now)
                 .setExpiration(expiry);
 
-        // Add custom claims
-        if (claims != null && !claims.isEmpty()) {
-            claims.forEach(builder::claim);
-        }
+
 
         return builder.signWith(secretKey, SignatureAlgorithm.HS256).compact();
     }

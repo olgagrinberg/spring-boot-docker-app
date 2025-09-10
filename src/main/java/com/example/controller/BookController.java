@@ -168,7 +168,7 @@ public class BookController {
     }
 
     @Operation(summary = "Search details", description = "Searches details from ai")
-    @GetMapping("/search")
+    @GetMapping("/details")
     @CircuitBreaker(name = BOOK_SERVICE, fallbackMethod = "fallbackSearchDetails")
     @Retry(name = BOOK_SERVICE)
     public ResponseEntity<String> searchDetails(@RequestParam("q") String query) {
@@ -176,13 +176,7 @@ public class BookController {
             logger.info("Searching details from ai");
 
             return query.startsWith("isbn") ? ResponseEntity.ok("ISBN") : ResponseEntity.ok("Description");
-                    /*bookRepository.findBySearchTerm(query)
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Details not found with query: {}", query);
-                        return ResponseEntity.notFound().build();
-                    });
-                     */
+
         } catch (Exception e) {
             logger.error("Error searching details", e);
             throw e;

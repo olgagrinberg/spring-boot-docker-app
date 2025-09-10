@@ -1,4 +1,5 @@
 package com.example.security;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,14 +57,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Validate token
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            //UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                    user,
-                    password,
-                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
-            );
-
             if (jwtUtil.validateToken(jwtToken)) {
+                Claims claims = jwtUtil.extractAllClaims(jwtToken);
+                String role = claims.get("role", String.class); // 👈 extract role from token
+
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role)); // 👈 map to authority
+
+                UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                        username,
+                        "", // password not needed for JWT-based auth
+                        authorities
+                );
+
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
