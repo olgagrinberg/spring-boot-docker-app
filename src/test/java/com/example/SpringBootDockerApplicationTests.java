@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "JWT_HEADER=Authorization",
         "JWT_PREFIX=Bearer "
 })
-@Disabled
+//@Disabled
 class SpringBootDockerApplicationTests {
 
     @LocalServerPort
@@ -124,7 +124,7 @@ class SpringBootDockerApplicationTests {
         user.setName("MariaDB Test User");
         user.setEmail("mariadb@example.com");
         user.setPassword("123");
-        user.setRole("admin");
+        user.setRole("ADMIN");
         User savedUser = userRepository.save(user);
 
         assertThat(savedUser.getId()).isNotNull();
@@ -211,7 +211,7 @@ class SpringBootDockerApplicationTests {
         newUser.setName("Maria DB User");
         newUser.setEmail("maria.db@example.com");
         newUser.setPassword("123");
-        newUser.setRole("admin");
+        newUser.setRole("ADMIN");
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(generateToken());
         HttpEntity<User> entity = new HttpEntity<>(newUser, headers);
@@ -272,7 +272,7 @@ class SpringBootDockerApplicationTests {
         user.setName("Cached MariaDB User");
         user.setEmail("cached.mariadb@example.com");
         user.setPassword("123");
-        user.setRole("admin");
+        user.setRole("ADMIN");
         User savedUser = userRepository.save(user);
 
         // First request - should cache the user
@@ -319,17 +319,17 @@ class SpringBootDockerApplicationTests {
         newUser1.setName("MariaDB User one");
         newUser1.setEmail("maria1@example.com");
         newUser1.setPassword("123");
-        newUser1.setRole("admin");
+        newUser1.setRole("ADMIN");
         var newUser2 = new User();
         newUser2.setName("MariaDB User two");
         newUser2.setEmail("maria2@example.com");
         newUser2.setPassword("123");
-        newUser2.setRole("admin");
+        newUser2.setRole("ADMIN");
         var newUser3 = new User();
         newUser3.setName("MariaDB User three");
         newUser3.setEmail("maria3@example.com");
         newUser3.setPassword("123");
-        newUser3.setRole("admin");
+        newUser3.setRole("ADMIN");
         userRepository.save(newUser1);
         userRepository.save(newUser2);
         userRepository.save(newUser3);
@@ -369,12 +369,12 @@ class SpringBootDockerApplicationTests {
         user1.setName("Test User one");
         user1.setEmail("test1@mariadb.com");
         user1.setPassword("123");
-        user1.setRole("admin");
+        user1.setRole("ADMIN");
         User user2 = new User();
         user2.setName("Test User two");
         user2.setEmail("test2@mariadb.com");
         user2.setPassword("123");
-        user2.setRole("admin");
+        user2.setRole("ADMIN");
         userRepository.save(user1);
         userRepository.save(user2);
 
@@ -402,7 +402,7 @@ class SpringBootDockerApplicationTests {
             validUser.setName("Valid User");
             validUser.setEmail("valid@mariadb.com");
             validUser.setPassword("123");
-            validUser.setRole("admin");
+            validUser.setRole("ADMIN");
             userRepository.save(validUser);
 
             // Verify user was saved
