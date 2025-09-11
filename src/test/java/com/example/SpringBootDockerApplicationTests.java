@@ -39,12 +39,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @TestPropertySource(properties = {
         "JWT_USER=testuser",
+        "JWT_ROLE=ADMIN",
         "JWT_PASSWORD=testpassword",
         "JWT_EXPIRATION=86400",
         "JWT_HEADER=Authorization",
         "JWT_PREFIX=Bearer "
 })
-//@Disabled
+
 class SpringBootDockerApplicationTests {
 
     @LocalServerPort
@@ -67,6 +68,9 @@ class SpringBootDockerApplicationTests {
 
     @Value("${JWT_EXPIRATION}")
     Long expirationSeconds;
+
+    @Value("${JWT_ROLE}")
+    String role;
 
     // Test containers for isolated testing
     @Container
@@ -424,7 +428,7 @@ class SpringBootDockerApplicationTests {
 
         return Jwts.builder()
                 .setSubject(username)
-                .claim("role", "ADMIN")
+                .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
