@@ -16,6 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
+@Builder
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "name"),
@@ -44,4 +45,6 @@ public class User {
     @Size(max = 20)
     private String role;
 
+    @Transient
+    private String operation;
 }

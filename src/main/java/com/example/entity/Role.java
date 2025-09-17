@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
+@Builder
 @Entity
 @Table(name = "roles", uniqueConstraints = {@UniqueConstraint(columnNames = "name")} )
 public class Role {

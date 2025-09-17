@@ -156,6 +156,7 @@ The application manages Docker containers automatically:
 - **SQL logging** enabled for development
 - **Actuator endpoints** for monitoring
 - **Redis caching** with automatic serialization
+- https://dev.to/devcorner/spring-boot-redis-multi-cache-a-complete-guide-1pff
 
 ## Troubleshooting
 

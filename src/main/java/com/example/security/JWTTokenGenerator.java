@@ -20,7 +20,7 @@ public class JWTTokenGenerator {
     // Your exact Base64 secret key
 
     // Default expiration: 24 hours in seconds
-    private static final long DEFAULT_EXPIRATION_SECONDS = 86400;
+    private static final long DEFAULT_EXPIRATION_SECONDS = 8640000;
 
     private final SecretKey secretKey;
 
@@ -309,23 +309,25 @@ public class JWTTokenGenerator {
      * Main method - Entry point
      */
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("🔐 JWT Token Generator - no secret");
-            return;
-        }
-        String base64_secret = args[0];
+
+
+        String base64_secret = "hHSScWk9zwVfwesvQjE5ItOqoEZTBqV7UVuFbrqnXPE=";//generateSecret();
         JWTTokenGenerator generator = new JWTTokenGenerator(base64_secret);
 
         System.out.println("🔐 JWT Token Generator - Java Edition");
         System.out.println("Using secret: " + base64_secret);
+        /*
         if (args.length == 1) {
             // Interactive mode
             generator.runInteractiveMode(base64_secret);
         } else {
+
+         */
             // Command line mode
-            String username = args[1];
+            String username = "admin";
             long expiration = DEFAULT_EXPIRATION_SECONDS;
 
+            /*
             if (args.length >= 3) {
                 try {
                     int hours = Integer.parseInt(args[2]);
@@ -335,6 +337,8 @@ public class JWTTokenGenerator {
                 }
             }
 
+             */
+
             String token = generator.generateToken(username, expiration);
             System.out.println("\n✅ Generated Token for '" + username + "':");
             System.out.println(token);
@@ -343,6 +347,6 @@ public class JWTTokenGenerator {
 
             System.out.println("\n🧪 Test Commands:");
             System.out.println("curl -H \"Authorization: Bearer " + token + "\" http://localhost:8080/api/protected");
-        }
+       // }
     }
 }
